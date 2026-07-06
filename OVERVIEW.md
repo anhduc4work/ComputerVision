@@ -61,40 +61,59 @@ ComputerVision/
 - Key concepts: Class imbalance handling, ROC/AUC, Grad-CAM visualization
 - Model: ResNet50 + DenseNet121
 
-## How to Run — Fully Automated
+## How to Run — Fully Automated via MCP
 
-The `push_to_kaggle.py` script handles everything: creates metadata, selects GPU type, pushes to Kaggle, and runs the notebook. No manual steps needed.
+This repo uses the **Kaggle MCP server** to push and run notebooks directly from Claude Code — no manual steps, no browser needed. The agent handles everything:
 
-### Push a single notebook
-```bash
-python scripts/push_to_kaggle.py 01_image_classification/notebook.ipynb --acc T4
+1. Reads the notebook `.ipynb` file
+2. Pushes it to Kaggle via `mcp__kaggle__save_notebook`
+3. Selects GPU type (T4 by default) via `machineShape`
+4. Attaches the correct dataset/competition sources
+5. Runs all cells top-to-bottom (`SaveAndRunAll`)
+6. Monitors status via `mcp__kaggle__get_notebook_session_status`
+
+### MCP Setup (`.mcp.json` at repo root)
+```json
+{
+  "mcpServers": {
+    "kaggle": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://www.kaggle.com/mcp",
+               "--header", "Authorization: Bearer YOUR_KAGGLE_TOKEN"],
+      "timeout": 30
+    }
+  }
+}
 ```
 
-### Push all notebooks at once
-```bash
-python scripts/push_to_kaggle.py --all --acc T4
-```
+### Key MCP Parameters for `save_notebook`
+| Parameter | Value | Purpose |
+|-----------|-------|---------|
+| `machineShape` | `NvidiaTeslaT4` | Select GPU type |
+| `enableGpu` | `true` | Enable GPU |
+| `enableInternet` | `true` | Allow pip installs |
+| `kernelExecutionType` | `SaveAndRunAll` | Auto-run all cells |
+| `datasetDataSources` | `["owner/dataset"]` | Attach datasets |
+| `competitionDataSources` | `["competition-slug"]` | Attach competition data |
 
 ### GPU Selection
 
-You can choose the exact GPU/TPU type via `--acc` (default: T4):
+| `machineShape` value     | GPU/Accelerator            | Free tier |
+|--------------------------|----------------------------|-----------|
+| `NvidiaTeslaP100`        | Tesla P100 (legacy default)| Yes       |
+| `NvidiaTeslaT4`          | Tesla T4 x2 (recommended) | Yes       |
+| `NvidiaTeslaT4Highmem`   | Tesla T4 high memory       | Yes       |
+| `NvidiaTeslaA100`        | Tesla A100                 | No        |
+| `NvidiaL4`               | NVIDIA L4                  | Limited   |
+| `NvidiaH100`             | NVIDIA H100                | No        |
+| `NvidiaRtxPro6000`       | RTX Pro 6000               | No        |
+| `TpuV38`                 | TPU v3-8                   | Yes       |
+| `TpuV5E8`                | TPU v5e-8                  | Yes       |
+| `TpuV6E8`                | TPU v6e-8                  | Yes       |
 
-| Shortcut     | Kaggle `machine_shape`   | Notes                        |
-|--------------|--------------------------|------------------------------|
-| `P100`       | `NvidiaTeslaP100`        | Legacy default               |
-| `T4`         | `NvidiaTeslaT4`          | Recommended (free tier)      |
-| `T4Highmem`  | `NvidiaTeslaT4Highmem`   | T4 with extra RAM            |
-| `A100`       | `NvidiaTeslaA100`        | Competition-only             |
-| `L4`         | `NvidiaL4`               | Newer GPU                    |
-| `H100`       | `NvidiaH100`             | Competition-only             |
-| `RTX6000`    | `NvidiaRtxPro6000`       | Limited availability         |
-| `TPUv3`      | `TpuV38`                 | TPU v3-8                     |
-| `TPUv5e`     | `TpuV5E8`                | TPU v5e-8                    |
-| `TPUv6e`     | `TpuV6E8`                | TPU v6e-8                    |
+**Important**: Setting only `enableGpu: true` without `machineShape` silently defaults to P100. Always specify `machineShape` explicitly.
 
-**Important**: Setting only `enable_gpu: true` without `machine_shape` defaults to P100. Always use `--acc T4` (or the desired type) to get the GPU you want.
-
-### Manual Upload (alternative)
+### Fallback: Manual Upload
 1. Go to kaggle.com/code → New Notebook
 2. File → Upload Notebook → select `.ipynb` from any project folder
 3. Add the dataset (listed in each notebook header)
