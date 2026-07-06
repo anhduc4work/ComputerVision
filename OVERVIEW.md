@@ -1,8 +1,31 @@
 # Computer Vision Research Lab
 
-A hands-on learning repo with 5 practical CV notebooks, each designed to run on **Kaggle free GPU** (T4/P100).
+A hands-on learning repo with 5 practical CV projects, each with a notebook ready to run on **Kaggle free GPU** (T4/P100).
 
-## Your GPU Quota (refreshes weekly)
+## Project Structure
+
+```
+ComputerVision/
+├── 01_image_classification/   # EfficientNet-B0 on Cats-vs-Dogs
+│   ├── README.md
+│   └── notebook.ipynb
+├── 02_object_detection/       # YOLOv8 on COCO 25-Class
+│   ├── README.md
+│   └── notebook.ipynb
+├── 03_image_segmentation/     # U-Net on Pothole Detection
+│   ├── README.md
+│   └── notebook.ipynb
+├── 04_digit_recognition/      # CNN vs ViT on MNIST
+│   ├── README.md
+│   └── notebook.ipynb
+├── 05_medical_imaging/        # Chest X-Ray Pneumonia + Grad-CAM
+│   ├── README.md
+│   └── notebook.ipynb
+└── scripts/
+    └── push_to_kaggle.py      # CLI to push & run notebooks on Kaggle
+```
+
+## GPU Quota (refreshes weekly)
 - **GPU**: ~30 hours/week (plenty for all 5 notebooks)
 - **TPU**: ~20 hours/week
 
@@ -38,18 +61,44 @@ A hands-on learning repo with 5 practical CV notebooks, each designed to run on 
 - Key concepts: Class imbalance handling, ROC/AUC, Grad-CAM visualization
 - Model: ResNet50 + DenseNet121
 
-## How to Run
+## How to Run — Fully Automated
 
-### Option A: Push to Kaggle (recommended)
+The `push_to_kaggle.py` script handles everything: creates metadata, selects GPU type, pushes to Kaggle, and runs the notebook. No manual steps needed.
+
+### Push a single notebook
 ```bash
-python scripts/push_to_kaggle.py notebooks/01_image_classification_efficientnet.ipynb --gpu
+python scripts/push_to_kaggle.py 01_image_classification/notebook.ipynb --acc T4
 ```
 
-### Option B: Upload manually
+### Push all notebooks at once
+```bash
+python scripts/push_to_kaggle.py --all --acc T4
+```
+
+### GPU Selection
+
+You can choose the exact GPU/TPU type via `--acc` (default: T4):
+
+| Shortcut     | Kaggle `machine_shape`   | Notes                        |
+|--------------|--------------------------|------------------------------|
+| `P100`       | `NvidiaTeslaP100`        | Legacy default               |
+| `T4`         | `NvidiaTeslaT4`          | Recommended (free tier)      |
+| `T4Highmem`  | `NvidiaTeslaT4Highmem`   | T4 with extra RAM            |
+| `A100`       | `NvidiaTeslaA100`        | Competition-only             |
+| `L4`         | `NvidiaL4`               | Newer GPU                    |
+| `H100`       | `NvidiaH100`             | Competition-only             |
+| `RTX6000`    | `NvidiaRtxPro6000`       | Limited availability         |
+| `TPUv3`      | `TpuV38`                 | TPU v3-8                     |
+| `TPUv5e`     | `TpuV5E8`                | TPU v5e-8                    |
+| `TPUv6e`     | `TpuV6E8`                | TPU v6e-8                    |
+
+**Important**: Setting only `enable_gpu: true` without `machine_shape` defaults to P100. Always use `--acc T4` (or the desired type) to get the GPU you want.
+
+### Manual Upload (alternative)
 1. Go to kaggle.com/code → New Notebook
-2. File → Upload Notebook → select .ipynb
+2. File → Upload Notebook → select `.ipynb` from any project folder
 3. Add the dataset (listed in each notebook header)
-4. Enable GPU in Settings → Accelerator
+4. Settings → Accelerator → GPU T4 x2
 5. Run All
 
 ## Key Libraries
